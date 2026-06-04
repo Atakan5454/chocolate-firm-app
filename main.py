@@ -1,12 +1,11 @@
+"""
+Chocolate Firm App - Entry Point
+Production-quality Flet application for chocolate firm.
+"""
+
 import flet as ft
+from app.main_app import main
 
 
-def main(page: ft.Page):
-    page.title = "Chocolate Firm App"
-    page.add(
-        ft.Text("Chocolate Firm App werkt!", size=28, weight=ft.FontWeight.BOLD),
-        ft.Text("Flet is succesvol gestart.")
-    )
-
-
-ft.app(target=main)
+if __name__ == "__main__":
+    ft.app(target=main)

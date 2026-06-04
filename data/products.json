@@ -1,0 +1,67 @@
+[
+  {
+    "id": 1,
+    "code": "CHOCO001",
+    "name": "Milk Chocolate",
+    "description": "Creamy milk chocolate bar",
+    "category": "Milk",
+    "origin": "Belgium",
+    "ingredients": ["Cocoa", "Milk", "Sugar"],
+    "allergens": ["Milk"],
+    "expiry_date": "2026-12-31",
+    "price": 2.99,
+    "image": "assets/milk_chocolate.png"
+  },
+  {
+    "id": 2,
+    "code": "CHOCO002",
+    "name": "Dark Chocolate",
+    "description": "Rich dark chocolate bar with 70% cocoa",
+    "category": "Dark",
+    "origin": "Switzerland",
+    "ingredients": ["Cocoa", "Sugar"],
+    "allergens": [],
+    "expiry_date": "2027-06-30",
+    "price": 3.49,
+    "image": "assets/dark_chocolate.png"
+  },
+  {
+    "id": 3,
+    "code": "CHOCO003",
+    "name": "Hazelnut Chocolate",
+    "description": "Smooth chocolate with hazelnut filling",
+    "category": "Hazelnut",
+    "origin": "Italy",
+    "ingredients": ["Cocoa", "Hazelnut", "Milk", "Sugar"],
+    "allergens": ["Nuts", "Milk"],
+    "expiry_date": "2027-03-15",
+    "price": 4.99,
+    "image": "assets/hazelnut_chocolate.png"
+  },
+  {
+    "id": 4,
+    "code": "CHOCO004",
+    "name": "Almond Chocolate",
+    "description": "Crispy almonds in silky chocolate",
+    "category": "Nuts",
+    "origin": "Spain",
+    "ingredients": ["Cocoa", "Almonds", "Milk", "Sugar"],
+    "allergens": ["Nuts", "Milk"],
+    "expiry_date": "2027-02-28",
+    "price": 3.99,
+    "image": "assets/almond_chocolate.png"
+  },
+  {
+    "id": 5,
+    "code": "CHOCO005",
+    "name": "White Chocolate",
+    "description": "Smooth white chocolate bar",
+    "category": "White",
+    "origin": "Germany",
+    "ingredients": ["Cocoa Butter", "Milk", "Sugar"],
+    "allergens": ["Milk"],
+    "expiry_date": "2027-01-10",
+    "price": 2.49,
+    "image": "assets/white_chocolate.png"
+  }
+]
