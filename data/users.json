@@ -3,6 +3,9 @@
     "id": 1,
     "name": "Atakan",
     "email": "atakan@example.com",
-    "password": "demo123"
+    "password": "demo123",
+    "favorite_chocolate": "Milk Chocolate",
+    "allergies": "Pinda",
+    "notifications_enabled": true
   }
 ]

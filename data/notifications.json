@@ -1,1 +1,37 @@
-[]
+[
+  {
+    "id": 1,
+    "user_id": 1,
+    "message": "Milk Chocolate is toegevoegd aan jouw producten.",
+    "date": "2026-06-04",
+    "is_read": false
+  },
+  {
+    "id": 2,
+    "user_id": 1,
+    "message": "Je bestelling van \u20ac10.87 is bevestigd.",
+    "date": "2026-06-04",
+    "is_read": false
+  },
+  {
+    "id": 3,
+    "user_id": 1,
+    "message": "Dark Chocolate is toegevoegd aan jouw producten.",
+    "date": "2026-06-04",
+    "is_read": false
+  },
+  {
+    "id": 4,
+    "user_id": 1,
+    "message": "Je bestelling van \u20ac14.16 is bevestigd.",
+    "date": "2026-06-04",
+    "is_read": false
+  },
+  {
+    "id": 5,
+    "user_id": 1,
+    "message": "Je klacht is ontvangen en geregistreerd.",
+    "date": "2026-06-04",
+    "is_read": false
+  }
+]

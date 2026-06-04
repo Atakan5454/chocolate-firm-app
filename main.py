@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from datetime import date
+from datetime import date, datetime
 import flet as ft
 
 PRIMARY = "#6F4E37"
@@ -11,6 +11,7 @@ TEXT = "#565656"
 MUTED_TEXT = "#565656"
 ERROR = "#C62828"
 SUCCESS = "#2E7D32"
+WARNING = "#FF9800"
 
 DATA_DIR = Path("data")
 USERS_FILE = DATA_DIR / "users.json"
@@ -18,6 +19,7 @@ PRODUCTS_FILE = DATA_DIR / "products.json"
 REGISTERED_FILE = DATA_DIR / "registered_products.json"
 COMPLAINTS_FILE = DATA_DIR / "complaints.json"
 ORDERS_FILE = DATA_DIR / "orders.json"
+NOTIFICATIONS_FILE = DATA_DIR / "notifications.json"
 
 PHONE_WIDTH = 390
 PHONE_HEIGHT = 760
@@ -55,6 +57,14 @@ def make_card(content):
     )
 
 
+def days_until_expiry(expiry_date):
+    try:
+        expiry = datetime.strptime(expiry_date, "%Y-%m-%d").date()
+        return (expiry - date.today()).days
+    except Exception:
+        return None
+
+
 def main(page: ft.Page):
     page.title = "Chocolate Firm App"
     page.bgcolor = "#D8C3AA"
@@ -69,6 +79,19 @@ def main(page: ft.Page):
         "selected_product": None,
         "cart": [],
     }
+
+    def add_notification(user_id, message):
+        notifications = load_json(NOTIFICATIONS_FILE)
+        notifications.append(
+            {
+                "id": len(notifications) + 1,
+                "user_id": user_id,
+                "message": message,
+                "date": str(date.today()),
+                "is_read": False,
+            }
+        )
+        save_json(NOTIFICATIONS_FILE, notifications)
 
     def render_phone(content, show_nav=True):
         page.controls.clear()
@@ -166,6 +189,8 @@ def main(page: ft.Page):
             show_profile()
         elif screen == "complaints":
             show_complaints()
+        elif screen == "edit_profile":
+            show_edit_profile()
 
     def show_login():
         email = ft.TextField(label="Email", border_radius=14, bgcolor=WHITE)
@@ -260,10 +285,15 @@ def main(page: ft.Page):
                 "name": name.value,
                 "email": email.value,
                 "password": password.value,
+                "favorite_chocolate": "",
+                "allergies": "",
+                "notifications_enabled": True,
             }
 
             users.append(new_user)
             save_json(USERS_FILE, users)
+
+            add_notification(new_user["id"], "Welkom bij Chocolate Firm.")
 
             state["user"] = new_user
             state["screen"] = "home"
@@ -311,6 +341,7 @@ def main(page: ft.Page):
         registered = load_json(REGISTERED_FILE)
         complaints = load_json(COMPLAINTS_FILE)
         orders = load_json(ORDERS_FILE)
+        notifications = load_json(NOTIFICATIONS_FILE)
 
         my_product_cards = []
 
@@ -318,6 +349,16 @@ def main(page: ft.Page):
             if item.get("user_id") == user["id"]:
                 product = next((p for p in products if p["id"] == item["product_id"]), None)
                 if product:
+                    expiry_text = []
+                    if product.get("expiry_date"):
+                        expiry_text.append(txt(f"Houdbaar tot: {product['expiry_date']}"))
+
+                        days_left = days_until_expiry(product["expiry_date"])
+                        if days_left is not None and days_left <= 30:
+                            expiry_text.append(
+                                txt("⚠ Verloopt binnenkort", color=WARNING, weight=ft.FontWeight.BOLD)
+                            )
+
                     my_product_cards.append(
                         make_card(
                             ft.Column(
@@ -330,6 +371,7 @@ def main(page: ft.Page):
                                     ),
                                     txt(f"Herkomst: {product['origin']}"),
                                     txt(f"Geregistreerd: {item['registered_date']}"),
+                                    *expiry_text,
                                 ],
                                 spacing=6,
                             )
@@ -343,6 +385,19 @@ def main(page: ft.Page):
 
         user_complaints = [c for c in complaints if c.get("user_id") == user["id"]]
         user_orders = [o for o in orders if o.get("user_id") == user["id"]]
+        user_notifications = [
+            n for n in notifications if n.get("user_id") == user["id"]
+        ][-3:]
+
+        notification_controls = []
+        if not user_notifications:
+            notification_controls.append(txt("Je hebt nog geen meldingen."))
+        else:
+            for notification in reversed(user_notifications):
+                notification_controls.append(
+                    txt(f"🔔 {notification['message']} ({notification['date']})")
+                )
+
         recommended_product = products[1] if len(products) > 1 else None
 
         content = ft.Column(
@@ -373,7 +428,9 @@ def main(page: ft.Page):
                         spacing=6,
                     )
                 ),
-                txt("Updates", size=19, weight=ft.FontWeight.BOLD),
+                txt("Recente meldingen", size=19, weight=ft.FontWeight.BOLD),
+                make_card(ft.Column(controls=notification_controls, spacing=4)),
+                txt("Overzicht", size=19, weight=ft.FontWeight.BOLD),
                 make_card(
                     ft.Column(
                         controls=[
@@ -429,6 +486,7 @@ def main(page: ft.Page):
             )
 
             save_json(REGISTERED_FILE, registered)
+            add_notification(user["id"], f"{product['name']} is toegevoegd aan jouw producten.")
 
             message.value = "Product succesvol geregistreerd."
             message.color = SUCCESS
@@ -471,6 +529,12 @@ def main(page: ft.Page):
                 product_controls.append(txt(f"Allergenen: {', '.join(product['allergens'])}"))
             if "expiry_date" in product:
                 product_controls.append(txt(f"Houdbaar tot: {product['expiry_date']}"))
+
+                days_left = days_until_expiry(product["expiry_date"])
+                if days_left is not None and days_left <= 30:
+                    product_controls.append(
+                        txt("⚠ Dit product verloopt binnenkort.", color=WARNING, weight=ft.FontWeight.BOLD)
+                    )
 
             product_controls.append(
                 ft.ElevatedButton(
@@ -571,14 +635,16 @@ def main(page: ft.Page):
             if "allergeen" in q or "allergenen" in q:
                 return "Allergenen staan bij de productinformatie nadat je een product hebt gescand."
             if "klacht" in q:
-                return "Je kunt je klachten beheren via Profiel en daarna Klachten beheren."
+                return "Je kunt je klachten beheren via Profiel en daarna Klachten beheren. Bij vragen kun je contact opnemen met de klantenservice."
             if "houdbaar" in q or "datum" in q:
-                return "De houdbaarheidsdatum staat bij de productinformatie."
+                return "De houdbaarheidsdatum staat bij de productinformatie. Producten die binnenkort verlopen worden extra gemarkeerd."
             if "scan" in q or "qr" in q:
                 return "Ga naar Scan en gebruik de knop Scan QR-code of voer een productcode in."
             if "bestel" in q or "shop" in q:
                 return "In de Shop kun je producten toevoegen aan je winkelmandje en een bestelling plaatsen."
-            return "Ik kan helpen met vragen over producten, allergenen, klachten, houdbaarheid, scannen en bestellen."
+            if "account" in q or "profiel" in q:
+                return "In Profiel kun je je gegevens, voorkeuren en allergieën bekijken en aanpassen."
+            return "Ik kan helpen met vragen over producten, allergenen, klachten, houdbaarheid, scannen, bestellen en accountinformatie. Voor andere vragen verwijs ik je door naar de klantenservice."
 
         def send_question(e):
             if not question_input.value:
@@ -701,19 +767,21 @@ def main(page: ft.Page):
                 return
 
             orders = load_json(ORDERS_FILE)
+            total = round(cart_total(), 2)
 
             orders.append(
                 {
                     "id": len(orders) + 1,
                     "user_id": user["id"],
                     "items": state["cart"],
-                    "total_price": round(cart_total(), 2),
+                    "total_price": total,
                     "status": "Bevestigd",
                     "created_at": str(date.today()),
                 }
             )
 
             save_json(ORDERS_FILE, orders)
+            add_notification(user["id"], f"Je bestelling van €{total:.2f} is bevestigd.")
 
             state["cart"] = []
             refresh_cart()
@@ -785,6 +853,7 @@ def main(page: ft.Page):
 
     def show_complaints():
         user = state["user"]
+        photo_added = {"value": False}
 
         title_input = ft.TextField(
             label="Onderwerp",
@@ -816,7 +885,13 @@ def main(page: ft.Page):
         )
 
         message = ft.Text("", size=13)
+        photo_status = ft.Text("", size=13, color=SUCCESS)
         complaints_list = ft.Column(spacing=6)
+
+        def add_photo(e):
+            photo_added["value"] = True
+            photo_status.value = "✓ Foto toegevoegd"
+            page.update()
 
         def delete_complaint(complaint_id):
             all_complaints = load_json(COMPLAINTS_FILE)
@@ -852,6 +927,7 @@ def main(page: ft.Page):
                                 txt(f"Categorie: {complaint['category']}"),
                                 txt(f"Beschrijving: {complaint['description']}"),
                                 txt(f"Status: {complaint['status']}", weight=ft.FontWeight.BOLD, color=PRIMARY),
+                                txt(f"Foto toegevoegd: {'Ja' if complaint.get('photo_added') else 'Nee'}"),
                                 txt(f"Aangemaakt op: {complaint['created_at']}"),
                                 ft.OutlinedButton(
                                     "Klacht verwijderen",
@@ -884,15 +960,19 @@ def main(page: ft.Page):
                     "description": description_input.value,
                     "category": category_input.value,
                     "status": "Ontvangen",
+                    "photo_added": photo_added["value"],
                     "created_at": str(date.today()),
                 }
             )
 
             save_json(COMPLAINTS_FILE, all_complaints)
+            add_notification(user["id"], "Je klacht is ontvangen en geregistreerd.")
 
             title_input.value = ""
             description_input.value = ""
             category_input.value = None
+            photo_added["value"] = False
+            photo_status.value = ""
 
             message.value = "Klacht succesvol ingediend."
             message.color = SUCCESS
@@ -919,6 +999,15 @@ def main(page: ft.Page):
                             title_input,
                             category_input,
                             description_input,
+                            ft.OutlinedButton(
+                                "Foto toevoegen",
+                                style=ft.ButtonStyle(
+                                    color=PRIMARY,
+                                    shape=ft.RoundedRectangleBorder(radius=14),
+                                ),
+                                on_click=add_photo,
+                            ),
+                            photo_status,
                             ft.ElevatedButton(
                                 "Klacht indienen",
                                 bgcolor=PRIMARY,
@@ -942,12 +1031,105 @@ def main(page: ft.Page):
 
         render_phone(content)
 
+    def show_edit_profile():
+        user = state["user"]
+
+        name_input = ft.TextField(
+            label="Naam",
+            value=user.get("name", ""),
+            border_radius=14,
+            bgcolor=WHITE,
+        )
+        favorite_input = ft.TextField(
+            label="Favoriete chocoladesoort",
+            value=user.get("favorite_chocolate", ""),
+            border_radius=14,
+            bgcolor=WHITE,
+        )
+        allergies_input = ft.TextField(
+            label="Allergieën",
+            value=user.get("allergies", ""),
+            border_radius=14,
+            bgcolor=WHITE,
+        )
+        notification_dropdown = ft.Dropdown(
+            label="Notificaties",
+            border_radius=14,
+            bgcolor=WHITE,
+            value="Aan" if user.get("notifications_enabled", True) else "Uit",
+            options=[
+                ft.dropdown.Option("Aan"),
+                ft.dropdown.Option("Uit"),
+            ],
+        )
+
+        message = ft.Text("", size=13)
+
+        def save_profile(e):
+            users = load_json(USERS_FILE)
+
+            for stored_user in users:
+                if stored_user["id"] == user["id"]:
+                    stored_user["name"] = name_input.value
+                    stored_user["favorite_chocolate"] = favorite_input.value
+                    stored_user["allergies"] = allergies_input.value
+                    stored_user["notifications_enabled"] = notification_dropdown.value == "Aan"
+
+                    state["user"] = stored_user
+                    break
+
+            save_json(USERS_FILE, users)
+
+            message.value = "Profiel succesvol opgeslagen."
+            message.color = SUCCESS
+            page.update()
+
+        content = ft.Column(
+            controls=[
+                ft.Text("Profiel bewerken", size=25, weight=ft.FontWeight.BOLD, color=PRIMARY),
+                txt("Beheer je gegevens, voorkeuren en notificaties.", size=14),
+                make_card(
+                    ft.Column(
+                        controls=[
+                            name_input,
+                            txt(f"Email: {user['email']}"),
+                            favorite_input,
+                            allergies_input,
+                            notification_dropdown,
+                            ft.ElevatedButton(
+                                "Wijzigingen opslaan",
+                                bgcolor=PRIMARY,
+                                color=WHITE,
+                                height=45,
+                                width=330,
+                                style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=16)),
+                                on_click=save_profile,
+                            ),
+                            message,
+                        ],
+                        spacing=8,
+                    )
+                ),
+                ft.ElevatedButton(
+                    "Terug naar profiel",
+                    bgcolor=SECONDARY,
+                    color=WHITE,
+                    on_click=lambda e: navigate("profile"),
+                ),
+            ],
+            spacing=8,
+            scroll=ft.ScrollMode.AUTO,
+        )
+
+        render_phone(content)
+
     def show_profile():
         user = state["user"]
         products = load_json(PRODUCTS_FILE)
         registered = load_json(REGISTERED_FILE)
         complaints = load_json(COMPLAINTS_FILE)
         orders = load_json(ORDERS_FILE)
+        notifications = load_json(NOTIFICATIONS_FILE)
 
         my_products = []
 
@@ -955,13 +1137,17 @@ def main(page: ft.Page):
             if item.get("user_id") == user["id"]:
                 product = next((p for p in products if p["id"] == item["product_id"]), None)
                 if product:
-                    my_products.append(txt(f"🍫 {product['name']}"))
+                    expiry_controls = []
+                    if product.get("expiry_date"):
+                        expiry_controls.append(f" - houdbaar tot {product['expiry_date']}")
+                    my_products.append(txt(f"🍫 {product['name']}{''.join(expiry_controls)}"))
 
         if not my_products:
             my_products.append(txt("Nog geen producten geregistreerd."))
 
         my_complaints_count = len([c for c in complaints if c.get("user_id") == user["id"]])
         my_orders = [o for o in orders if o.get("user_id") == user["id"]]
+        my_notifications = [n for n in notifications if n.get("user_id") == user["id"]]
 
         order_controls = []
         if not my_orders:
@@ -971,6 +1157,13 @@ def main(page: ft.Page):
                 order_controls.append(
                     txt(f"Bestelling #{order['id']} - €{order['total_price']:.2f} - {order['status']}")
                 )
+
+        notification_controls = []
+        if not my_notifications:
+            notification_controls.append(txt("Nog geen meldingen."))
+        else:
+            for notification in reversed(my_notifications[-5:]):
+                notification_controls.append(txt(f"🔔 {notification['message']}"))
 
         def logout(e):
             state["user"] = None
@@ -988,6 +1181,15 @@ def main(page: ft.Page):
                             txt("Mijn gegevens", size=17, weight=ft.FontWeight.BOLD),
                             txt(f"Naam: {user['name']}"),
                             txt(f"Email: {user['email']}"),
+                            txt(f"Favoriete chocolade: {user.get('favorite_chocolate', '-') or '-'}"),
+                            txt(f"Allergieën: {user.get('allergies', '-') or '-'}"),
+                            txt(f"Notificaties: {'Aan' if user.get('notifications_enabled', True) else 'Uit'}"),
+                            ft.ElevatedButton(
+                                "Profiel bewerken",
+                                bgcolor=PRIMARY,
+                                color=WHITE,
+                                on_click=lambda e: navigate("edit_profile"),
+                            ),
                         ],
                         spacing=5,
                     )
@@ -1006,6 +1208,15 @@ def main(page: ft.Page):
                         controls=[
                             txt("Mijn bestellingen", size=17, weight=ft.FontWeight.BOLD),
                             *order_controls,
+                        ],
+                        spacing=5,
+                    )
+                ),
+                make_card(
+                    ft.Column(
+                        controls=[
+                            txt("Meldingen", size=17, weight=ft.FontWeight.BOLD),
+                            *notification_controls,
                         ],
                         spacing=5,
                     )
