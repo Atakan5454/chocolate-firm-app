@@ -1,0 +1,90 @@
+[
+  {
+    "id": 1,
+    "code": "CHOCO001",
+    "name": "Milk Chocolate",
+    "origin": "Belgium",
+    "price": 2.99,
+    "description": "Romige melkchocolade.",
+    "ingredients": ["Cocoa", "Milk", "Sugar"],
+    "allergens": ["Milk"],
+    "expiry_date": "2026-12-31"
+  },
+  {
+    "id": 2,
+    "code": "CHOCO002",
+    "name": "Hazelnut Chocolate",
+    "origin": "Netherlands",
+    "price": 3.49,
+    "description": "Melkchocolade met hazelnoten.",
+    "ingredients": ["Cocoa", "Milk", "Hazelnut", "Sugar"],
+    "allergens": ["Milk", "Hazelnut"],
+    "expiry_date": "2026-11-15"
+  },
+  {
+    "id": 3,
+    "code": "CHOCO003",
+    "name": "Dark Chocolate",
+    "origin": "Belgium",
+    "price": 3.99,
+    "description": "Pure chocolade 70% cacao.",
+    "ingredients": ["Cocoa", "Sugar"],
+    "allergens": [],
+    "expiry_date": "2027-01-20"
+  },
+  {
+    "id": 4,
+    "code": "CHOCO004",
+    "name": "White Chocolate",
+    "origin": "France",
+    "price": 2.79,
+    "description": "Zachte witte chocolade.",
+    "ingredients": ["Milk", "Sugar", "Cocoa Butter"],
+    "allergens": ["Milk"],
+    "expiry_date": "2026-10-10"
+  },
+  {
+    "id": 5,
+    "code": "CHOCO005",
+    "name": "Caramel Chocolate",
+    "origin": "Germany",
+    "price": 3.59,
+    "description": "Melkchocolade met karamelsmaak.",
+    "ingredients": ["Cocoa", "Milk", "Caramel", "Sugar"],
+    "allergens": ["Milk"],
+    "expiry_date": "2026-09-15"
+  },
+  {
+    "id": 6,
+    "code": "CHOCO006",
+    "name": "Orange Chocolate",
+    "origin": "Spain",
+    "price": 3.29,
+    "description": "Pure chocolade met sinaasappel.",
+    "ingredients": ["Cocoa", "Orange", "Sugar"],
+    "allergens": [],
+    "expiry_date": "2026-12-01"
+  },
+  {
+    "id": 7,
+    "code": "CHOCO007",
+    "name": "Almond Chocolate",
+    "origin": "Italy",
+    "price": 3.89,
+    "description": "Chocolade met geroosterde amandelen.",
+    "ingredients": ["Cocoa", "Milk", "Almond", "Sugar"],
+    "allergens": ["Milk", "Almond"],
+    "expiry_date": "2027-02-01"
+  },
+  {
+    "id": 8,
+    "code": "CHOCO008",
+    "name": "Mint Chocolate",
+    "origin": "United Kingdom",
+    "price": 3.49,
+    "description": "Verfrissende muntchocolade.",
+    "ingredients": ["Cocoa", "Mint", "Sugar"],
+    "allergens": [],
+    "expiry_date": "2026-11-30"
+  }
+]
